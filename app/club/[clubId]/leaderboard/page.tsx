@@ -161,7 +161,7 @@ export default function LeaderboardPage() {
   let playerRow: Row | null = null;
   let playerRank: number | null = null;
 
-  rows.forEach((row, index) => {
+  rows.forEach((row: Row, index: number) => {
     if (row.user_id === currentUserId) {
       playerRow = row;
       playerRank = index + 1;
@@ -169,11 +169,12 @@ export default function LeaderboardPage() {
   });
 
   const NEXT_REWARD = 100;
-  const playerPoints = playerRow?.total_points ?? 0;
+  const playerPoints = playerRow ? playerRow.total_points : 0;
   const progress =
     playerPoints > 0
       ? Math.min(100, Math.round((playerPoints / NEXT_REWARD) * 100))
       : 0;
+
   const pointsLeft = Math.max(0, NEXT_REWARD - playerPoints);
 
   return (
