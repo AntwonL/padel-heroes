@@ -1,8 +1,11 @@
 "use client";
 
+export const dynamic = "force-dynamic"; // ⬅️ ajoute cette ligne
+
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+
 
 const DEFAULT_CLUB_ID = "5337ea63-f5ab-4d50-bf22-ce0cb82c8a85"; // ⬅️ remplace
 
