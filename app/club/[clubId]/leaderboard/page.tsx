@@ -10,7 +10,7 @@ type Row = {
   total_points: number;
 };
 
-const CLUB_ID_DEFAULT = "5337ea63-f5ab-4d50-bf22-ce0cb82c8a85"; // ⬅️ même ID que le reste
+const CLUB_ID_DEFAULT = "5337ea63-f5ab-4d50-bf22-ce0cb82c8a85"; // ⬅️ remplace par ton UUID de club
 
 export default function LeaderboardPage() {
   const params = useParams();
@@ -46,6 +46,7 @@ export default function LeaderboardPage() {
         }
         setCurrentUserId(user.id);
 
+        // Points du club
         const {
           data: pointsData,
           error: pointsError,
@@ -57,13 +58,14 @@ export default function LeaderboardPage() {
 
         if (pointsError) {
           console.error(pointsError);
-          setError("Impossible de récupérer le classement.");
+          setError("Impossible de récupérer le classement du club.");
           return;
         }
 
         const points = pointsData ?? [];
         const userIds = [...new Set(points.map((p) => p.user_id))];
 
+        // Profils (usernames)
         let usernamesMap: Record<string, string> = {};
         if (userIds.length > 0) {
           const {
@@ -106,6 +108,7 @@ export default function LeaderboardPage() {
     loadLeaderboard();
   }, [clubId, router]);
 
+  // Wrapper commun
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
     <main className="min-h-screen bg-[#0BA197] flex items-center justify-center px-5 py-8 text-white">
       <div className="w-full max-w-sm">{children}</div>
@@ -135,7 +138,7 @@ export default function LeaderboardPage() {
       <Wrapper>
         <div className="bg-[#0F8A84] rounded-3xl p-6 shadow-xl space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg_white/15 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-2xl bg-white/15 flex items-center justify-center">
               <span className="text-lg">⚠️</span>
             </div>
             <div>
@@ -154,9 +157,29 @@ export default function LeaderboardPage() {
     );
   }
 
+  // Calcul de la position du joueur
+  let playerRow: Row | null = null;
+  let playerRank: number | null = null;
+
+  rows.forEach((row, index) => {
+    if (row.user_id === currentUserId) {
+      playerRow = row;
+      playerRank = index + 1;
+    }
+  });
+
+  const NEXT_REWARD = 100;
+  const playerPoints = playerRow?.total_points ?? 0;
+  const progress =
+    playerPoints > 0
+      ? Math.min(100, Math.round((playerPoints / NEXT_REWARD) * 100))
+      : 0;
+  const pointsLeft = Math.max(0, NEXT_REWARD - playerPoints);
+
   return (
     <Wrapper>
       <div className="space-y-4">
+        {/* Header */}
         <header className="flex items-center justify-between">
           <button
             onClick={() => router.push("/")}
@@ -169,9 +192,60 @@ export default function LeaderboardPage() {
           </span>
         </header>
 
-        <div className="bg-[#0F8A84] rounded-3xl p-6 shadow-xl space-y-3">
+        <div className="bg-[#0F8A84] rounded-3xl p-6 shadow-xl space-y-4">
           <h1 className="text-xl font-semibold mb-1">Classement</h1>
 
+          {/* Highlight du joueur */}
+          {rows.length > 0 && playerRow && playerRank && (
+            <div className="mb-3 p-4 bg-white/18 rounded-2xl border border-white/25 shadow-sm">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-white/75">
+                Ta position
+              </p>
+              <div className="flex items-center justify-between mt-2">
+                <div className="space-y-0.5">
+                  <p className="text-[13px] text-white/85">
+                    Tu es{" "}
+                    <span className="font-semibold text-white">
+                      {playerRank}
+                      <span className="align-super text-[9px]">ᵉ</span>
+                    </span>{" "}
+                    du club
+                  </p>
+                  <p className="text-[11px] text-white/80">
+                    Score actuel :{" "}
+                    <span className="font-semibold">
+                      {playerPoints} pts
+                    </span>
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-white/25 flex items-center justify-center text-lg">
+                  🏅
+                </div>
+              </div>
+
+              <div className="mt-3 space-y-1">
+                <div className="flex justify-between text-[10px] text-white/80">
+                  <span>Prochaine récompense</span>
+                  <span>{NEXT_REWARD} pts</span>
+                </div>
+                <div className="w-full h-[10px] bg-white/20 rounded-full overflow-hidden flex items-center">
+                  <div
+                    className="h-[8px] ml-[1px] mr-[1px] rounded-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.7)]"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-white/80 mt-1">
+                  Plus que{" "}
+                  <span className="font-semibold">
+                    {pointsLeft} pts
+                  </span>{" "}
+                  pour atteindre le prochain palier.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Liste des joueurs */}
           {rows.length === 0 ? (
             <p className="text-[12px] text-white/90">
               Aucun joueur n&apos;a encore de points dans ce club. Sois le
@@ -185,7 +259,9 @@ export default function LeaderboardPage() {
                   <li
                     key={row.user_id}
                     className={`flex items-center justify-between rounded-2xl px-3 py-2.5 ${
-                      isCurrent ? "bg-[#098C88]" : "bg-white/10"
+                      isCurrent
+                        ? "bg-white/25 border border-white/35 shadow-md"
+                        : "bg-white/10"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -197,8 +273,8 @@ export default function LeaderboardPage() {
                           {row.username}
                         </span>
                         {isCurrent && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20 mt-0.5">
-                            Toi
+                          <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-white text-[#0F8A84] font-semibold mt-1">
+                            <span className="text-[11px]">⭐</span> Toi
                           </span>
                         )}
                       </div>
