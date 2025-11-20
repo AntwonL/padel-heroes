@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: "Gagne des points en checkant tes sessions de padel.",
   // PWA
   manifest: "/manifest.json",
-  themeColor: "#00A8A8",
+  themeColor: "#0BA197",
   icons: {
     icon: "/icons/icon-192.png",
     apple: "/icons/icon-192.png",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr">
-      <body className="bg-[#00A8A8] text-white antialiased">
+      <body className="bg-[#0BA197] text-white antialiased">
         {children}
 
         {/* Enregistrement du Service Worker PWA */}
