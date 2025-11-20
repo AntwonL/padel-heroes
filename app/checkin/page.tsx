@@ -1,17 +1,41 @@
 "use client";
 
-export const dynamic = "force-dynamic"; // ⬅️ ajoute cette ligne
-
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
+export const dynamic = "force-dynamic"; // on force la page en dynamique
 
-const DEFAULT_CLUB_ID = "5337ea63-f5ab-4d50-bf22-ce0cb82c8a85"; // ⬅️ remplace
-
+const DEFAULT_CLUB_ID = "5337ea63-f5ab-4d50-bf22-ce0cb82c8a85"; // ⬅️ remplace par ton UUID
 type Status = "loading" | "success" | "tooSoon" | "error";
 
+// ---------- COMPOSANT DE PAGE (layout + Suspense) ----------
 export default function CheckinPage() {
+  return (
+    <main className="min-h-screen bg-[#0BA197] flex items-center justify-center px-5 py-8">
+      <div className="w-full max-w-sm text-white">
+        <Suspense
+          fallback={
+            <div className="bg-[#0F8A84] rounded-3xl p-6 shadow-xl flex flex-col items-center gap-4">
+              <div className="w-10 h-10 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+              <div className="text-center space-y-1">
+                <p className="text-sm font-semibold">Validation de ta session...</p>
+                <p className="text-[11px] text-white/85">
+                  Ne ferme pas la page, on enregistre ton check-in et tes points.
+                </p>
+              </div>
+            </div>
+          }
+        >
+          <CheckinContent />
+        </Suspense>
+      </div>
+    </main>
+  );
+}
+
+// ---------- LOGIQUE PRINCIPALE ----------
+function CheckinContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -38,7 +62,7 @@ export default function CheckinPage() {
         const clubIdFromUrl = searchParams.get("clubId");
         const clubId = clubIdFromUrl || DEFAULT_CLUB_ID;
 
-        // Dernier checkin
+        // Vérifier le dernier check-in
         const { data: lastCheckin } = await supabase
           .from("checkins")
           .select("created_at")
@@ -64,7 +88,7 @@ export default function CheckinPage() {
           }
         }
 
-        // Nouveau checkin
+        // Insérer le check-in
         const { error: insertError } = await supabase.from("checkins").insert({
           user_id: user.id,
           club_id: clubId,
@@ -79,7 +103,7 @@ export default function CheckinPage() {
           return;
         }
 
-        // Points
+        // Gérer les points
         const { data: existingPoints } = await supabase
           .from("points")
           .select("total_points")
@@ -96,7 +120,6 @@ export default function CheckinPage() {
             .update({ total_points: newTotal })
             .eq("user_id", user.id)
             .eq("club_id", clubId);
-
           if (updateError) console.error(updateError);
         } else {
           const { error: insertPointsError } = await supabase
@@ -106,7 +129,6 @@ export default function CheckinPage() {
               club_id: clubId,
               total_points: newTotal,
             });
-
           if (insertPointsError) console.error(insertPointsError);
         }
 
@@ -124,139 +146,125 @@ export default function CheckinPage() {
     handleCheckin();
   }, [searchParams, router, pointsAdded]);
 
-  const Wrapper = ({ children }: { children: React.ReactNode }) => (
-    <main className="min-h-screen bg-[#0BA197] flex items-center justify-center px-5 py-8">
-      <div className="w-full max-w-sm text-white">{children}</div>
-    </main>
-  );
+  // ----- UI selon l'état -----
 
   if (status === "loading") {
     return (
-      <Wrapper>
-        <div className="bg-[#0F8A84] rounded-3xl p-6 shadow-xl flex flex-col items-center gap-4">
-          <div className="w-10 h-10 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-          <div className="text-center space-y-1">
-            <p className="text-sm font-semibold">Validation de ta session...</p>
-            <p className="text-[11px] text-white/85">
-              Ne ferme pas la page, on enregistre ton check-in et tes points.
-            </p>
-          </div>
+      <div className="bg-[#0F8A84] rounded-3xl p-6 shadow-xl flex flex-col items-center gap-4">
+        <div className="w-10 h-10 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+        <div className="text-center space-y-1">
+          <p className="text-sm font-semibold">Validation de ta session...</p>
+          <p className="text-[11px] text-white/85">
+            Ne ferme pas la page, on enregistre ton check-in et tes points.
+          </p>
         </div>
-      </Wrapper>
+      </div>
     );
   }
 
   if (status === "error") {
     return (
-      <Wrapper>
-        <div className="bg-[#0F8A84] rounded-3xl p-6 shadow-xl space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-white/15 flex items-center justify-center">
-              <span className="text-lg">⚠️</span>
-            </div>
-            <div>
-              <p className="text-sm font-semibold">Oups...</p>
-              <p className="text-[11px] text-white/85">
-                {errorMessage ||
-                  "Impossible d'enregistrer ta session pour le moment."}
-              </p>
-            </div>
+      <div className="bg-[#0F8A84] rounded-3xl p-6 shadow-xl space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-2xl bg-white/15 flex items-center justify-center">
+            <span className="text-lg">⚠️</span>
           </div>
-          <button
-            onClick={() => router.push("/")}
-            className="w-full rounded-xl bg-white text-[#0F8A84] font-semibold py-2.5 text-sm"
-          >
-            Retour à l&apos;accueil
-          </button>
+          <div>
+            <p className="text-sm font-semibold">Oups...</p>
+            <p className="text-[11px] text-white/85">
+              {errorMessage ||
+                "Impossible d'enregistrer ta session pour le moment."}
+            </p>
+          </div>
         </div>
-      </Wrapper>
+        <button
+          onClick={() => router.push("/")}
+          className="w-full rounded-xl bg-white text-[#0F8A84] font-semibold py-2.5 text-sm"
+        >
+          Retour à l&apos;accueil
+        </button>
+      </div>
     );
   }
 
   if (status === "tooSoon") {
     return (
-      <Wrapper>
-        <div className="bg-[#0F8A84] rounded-3xl p-6 shadow-xl space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-white/15 flex items-center justify-center">
-              <span className="text-lg">⏱️</span>
-            </div>
-            <div>
-              <p className="text-sm font-semibold">Session déjà validée</p>
-              <p className="text-[11px] text-white/85">
-                Tu as déjà enregistré une session récemment dans ce club.
-              </p>
-            </div>
+      <div className="bg-[#0F8A84] rounded-3xl p-6 shadow-xl space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-2xl bg-white/15 flex items-center justify-center">
+            <span className="text-lg">⏱️</span>
           </div>
-          <p className="text-[11px] text-white/85">
-            Tu pourras re-scanner un court dans environ{" "}
-            <span className="font-semibold">
-              {minutesLeft} minute{minutesLeft > 1 ? "s" : ""}
-            </span>
-            . Cette limite permet d&apos;éviter les abus et de garder le
-            classement fair-play.
+          <div>
+            <p className="text-sm font-semibold">Session déjà validée</p>
+            <p className="text-[11px] text-white/85">
+              Tu as déjà enregistré une session récemment dans ce club.
+            </p>
+          </div>
+        </div>
+        <p className="text-[11px] text-white/85">
+          Tu pourras re-scanner un court dans environ{" "}
+          <span className="font-semibold">
+            {minutesLeft} minute{minutesLeft > 1 ? "s" : ""}
+          </span>
+          . Cette limite permet d&apos;éviter les abus et de garder le
+          classement fair-play.
+        </p>
+        <button
+          onClick={() => router.push("/")}
+          className="w-full rounded-xl bg:white text-[#0F8A84] font-semibold py-2.5 text-sm bg-white"
+        >
+          Retour à l&apos;accueil
+        </button>
+      </div>
+    );
+  }
+
+  if (status === "success") {
+    return (
+      <div className="bg-[#0F8A84] rounded-3xl p-6 shadow-xl space-y-5">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center">
+            <span className="text-2xl">✅</span>
+          </div>
+          <div className="text-center space-y-1">
+            <p className="text-xs uppercase tracking-[0.16em] text:white/85">
+              Session validée
+            </p>
+            <p className="text-3xl font-extrabold leading-tight">
+              +{pointsAdded} pts
+            </p>
+            <p className="text-[11px] text-white/85">
+              Tes points ont bien été ajoutés pour cette session.
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl p-4 bg-white/12 border border-white/15 space-y-1">
+          <p className="text-[11px] text-white/85">Total actuel dans ce club</p>
+          <p className="text-2xl font-semibold">{totalPoints} pts</p>
+          <p className="text-[11px] text-white/80">
+            Continue de scanner avant tes matchs pour grimper dans le
+            classement.
           </p>
+        </div>
+
+        <div className="flex flex-col gap-2">
           <button
             onClick={() => router.push("/")}
             className="w-full rounded-xl bg-white text-[#0F8A84] font-semibold py-2.5 text-sm"
           >
             Retour à l&apos;accueil
           </button>
+          <button
+            onClick={() =>
+              router.push(`/club/${DEFAULT_CLUB_ID}/leaderboard`)
+            }
+            className="w-full rounded-xl border border-white/40 bg-transparent text-white font-semibold py-2.5 text-sm"
+          >
+            Voir le classement du club
+          </button>
         </div>
-      </Wrapper>
-    );
-  }
-
-  if (status === "success") {
-    return (
-      <Wrapper>
-        <div className="bg-[#0F8A84] rounded-3xl p-6 shadow-xl space-y-5">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center">
-              <span className="text-2xl">✅</span>
-            </div>
-            <div className="text-center space-y-1">
-              <p className="text-xs uppercase tracking-[0.16em] text-white/85">
-                Session validée
-              </p>
-              <p className="text-3xl font-extrabold leading-tight">
-                +{pointsAdded} pts
-              </p>
-              <p className="text-[11px] text-white/85">
-                Tes points ont bien été ajoutés pour cette session.
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-2xl p-4 bg-white/12 border border-white/15 space-y-1">
-            <p className="text-[11px] text-white/85">
-              Total actuel dans ce club
-            </p>
-            <p className="text-2xl font-semibold">{totalPoints} pts</p>
-            <p className="text-[11px] text-white/80">
-              Continue de scanner avant tes matchs pour grimper dans le
-              classement.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={() => router.push("/")}
-              className="w-full rounded-xl bg-white text-[#0F8A84] font-semibold py-2.5 text-sm"
-            >
-              Retour à l&apos;accueil
-            </button>
-            <button
-              onClick={() =>
-                router.push(`/club/${DEFAULT_CLUB_ID}/leaderboard`)
-              }
-              className="w-full rounded-xl border border-white/40 bg-transparent text-white font-semibold py-2.5 text-sm"
-            >
-              Voir le classement du club
-            </button>
-          </div>
-        </div>
-      </Wrapper>
+      </div>
     );
   }
 
