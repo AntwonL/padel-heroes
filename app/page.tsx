@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 
-const CLUB_ID = "5337ea63-f5ab-4d50-bf22-ce0cb82c8a85"; // ⬅️ à remplacer
+const CLUB_ID = "5337ea63-f5ab-4d50-bf22-ce0cb82c8a85"; // ⬅️ remplace
 const WEEKLY_GOAL = 2;
 
 export default function HomePage() {
@@ -99,22 +99,35 @@ export default function HomePage() {
             SCANNER
           </Link>
 
-          {/* Stats */}
+          {/* Stats avec pictos */}
           <div className="grid grid-cols-2 gap-4 pt-1">
-            <div className="rounded-2xl p-4 space-y-1 bg-white/12 border border-white/15 shadow-sm">
-              <p className="text-xs text-white/85">Points</p>
-              <p className="text-3xl font-bold">{points}</p>
-              <p className="text-[11px] text-white/80">
+            {/* Points */}
+            <div className="rounded-2xl p-4 bg-white/12 border border-white/15 shadow-sm space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-sm">
+                  🎾
+                </div>
+                <p className="text-xs text-white/85">Points</p>
+              </div>
+              <p className="text-3xl font-bold leading-tight mt-1">{points}</p>
+              <p className="text-[11px] text-white/80 mt-1">
                 {pointsLeft} pts avant récompense
               </p>
             </div>
-            <div className="rounded-2xl p-4 space-y-1 bg-white/12 border border-white/15 shadow-sm">
-              <p className="text-xs text-white/85">Sessions semaine</p>
-              <p className="text-3xl font-bold">
+
+            {/* Sessions semaine */}
+            <div className="rounded-2xl p-4 bg-white/12 border border-white/15 shadow-sm space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-sm">
+                  💪
+                </div>
+                <p className="text-xs text-white/85">Sessions semaine</p>
+              </div>
+              <p className="text-3xl font-bold leading-tight mt-1">
                 {weeklyPlayed} / {WEEKLY_GOAL}
               </p>
-              <p className="text-[11px] text-white/80">
-                Objectif : {WEEKLY_GOAL}
+              <p className="text-[11px] text-white/80 mt-1">
+                Objectif : {WEEKLY_GOAL} séances
               </p>
             </div>
           </div>
@@ -122,12 +135,19 @@ export default function HomePage() {
 
         {/* ---- CARD 2 ---- */}
         <div className="bg-[#0F8A84] rounded-3xl p-6 shadow-xl space-y-4">
-          <div className="flex justify-between text-xs text-white/85">
-            <span>Prochaine récompense</span>
-            <span>{NEXT_REWARD} pts</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-white/18 flex items-center justify-center text-sm">
+                🏅
+              </div>
+              <span className="text-xs text-white/85">
+                Prochaine récompense
+              </span>
+            </div>
+            <span className="text-xs text-white/85">{NEXT_REWARD} pts</span>
           </div>
 
-          {/* Barre de progression plus visible */}
+          {/* Barre de progression bien visible */}
           <div className="w-full h-[14px] bg-white/28 rounded-full overflow-hidden flex items-center">
             <div
               className="h-[10px] ml-[2px] mr-[2px] rounded-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.7)]"
