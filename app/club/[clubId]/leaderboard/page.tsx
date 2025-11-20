@@ -10,7 +10,7 @@ type Row = {
   total_points: number;
 };
 
-const CLUB_ID_DEFAULT = "5337ea63-f5ab-4d50-bf22-ce0cb82c8a85"; // ⬅️ remplace par ton UUID de club
+const CLUB_ID_DEFAULT = "TON_CLUB_ID_DE_TEST"; // ⬅️ remplace par ton UUID de club
 
 export default function LeaderboardPage() {
   const params = useParams();
@@ -108,7 +108,6 @@ export default function LeaderboardPage() {
     loadLeaderboard();
   }, [clubId, router]);
 
-  // Wrapper commun
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
     <main className="min-h-screen bg-[#0BA197] flex items-center justify-center px-5 py-8 text-white">
       <div className="w-full max-w-sm">{children}</div>
@@ -157,24 +156,19 @@ export default function LeaderboardPage() {
     );
   }
 
-  // Calcul de la position du joueur
-  let playerRow: Row | null = null;
-  let playerRank: number | null = null;
-
-  rows.forEach((row: Row, index: number) => {
-    if (row.user_id === currentUserId) {
-      playerRow = row;
-      playerRank = index + 1;
-    }
-  });
+  // 🔎 Calcul rang + points du joueur directement depuis rows
+  const currentIndex = rows.findIndex(
+    (row: Row) => row.user_id === currentUserId
+  );
+  const playerRank = currentIndex === -1 ? null : currentIndex + 1;
+  const playerPoints =
+    currentIndex === -1 ? 0 : rows[currentIndex].total_points;
 
   const NEXT_REWARD = 100;
-  const playerPoints = playerRow ? playerRow.total_points : 0;
   const progress =
     playerPoints > 0
       ? Math.min(100, Math.round((playerPoints / NEXT_REWARD) * 100))
       : 0;
-
   const pointsLeft = Math.max(0, NEXT_REWARD - playerPoints);
 
   return (
@@ -197,8 +191,8 @@ export default function LeaderboardPage() {
           <h1 className="text-xl font-semibold mb-1">Classement</h1>
 
           {/* Highlight du joueur */}
-          {rows.length > 0 && playerRow && playerRank && (
-            <div className="mb-3 p-4 bg-white/18 rounded-2xl border border-white/25 shadow-sm">
+          {rows.length > 0 && playerRank !== null && (
+            <div className="mb-3 p-4 bg:white/18 rounded-2xl border border-white/25 shadow-sm bg-white/18">
               <p className="text-[11px] uppercase tracking-[0.16em] text-white/75">
                 Ta position
               </p>
@@ -206,7 +200,7 @@ export default function LeaderboardPage() {
                 <div className="space-y-0.5">
                   <p className="text-[13px] text-white/85">
                     Tu es{" "}
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text:white text-white">
                       {playerRank}
                       <span className="align-super text-[9px]">ᵉ</span>
                     </span>{" "}
@@ -254,7 +248,7 @@ export default function LeaderboardPage() {
             </p>
           ) : (
             <ul className="space-y-2">
-              {rows.map((row, index) => {
+              {rows.map((row: Row, index: number) => {
                 const isCurrent = row.user_id === currentUserId;
                 return (
                   <li
